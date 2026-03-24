@@ -822,6 +822,50 @@ h1 {
   margin-bottom: 18px;
 }
 
+.gym-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.gym-day-card-active {
+  border-color: rgba(201, 111, 59, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(201, 111, 59, 0.18);
+}
+
+.gym-note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.gym-exercise-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.gym-exercise-row,
+.workout-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.gym-exercise-row strong,
+.workout-copy strong {
+  display: block;
+  font-size: 0.98rem;
+}
+
+.gym-exercise-row span,
+.workout-copy span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+
 .job-score-pill {
   display: inline-flex;
   padding: 6px 12px;
@@ -1053,6 +1097,7 @@ h1 {
   .logs-grid,
   .pipeline-summary,
   .jobs-top-grid,
+  .gym-grid,
   .revision-summary-grid,
   .revision-detail-grid,
   .revision-chip-grid,

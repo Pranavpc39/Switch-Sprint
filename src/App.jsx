@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { gymPlan, weekdayIndexToKey } from "./gymPlan";
 import { jobReportHistory, jobReportMeta } from "./jobReportsData.generated";
 import { javaRevisionPlan } from "./javaRevision";
 import { plan, quotes, statFields } from "./plan";
@@ -648,6 +649,101 @@ function JobsPage() {
           </section>
         </>
       ) : null}
+    </main>
+  );
+}
+
+function GymPage() {
+  const todayKey = weekdayIndexToKey[new Date().getDay()];
+  const todayPlan = gymPlan.find((item) => item.dayKey === todayKey) || gymPlan[0];
+
+  return (
+    <main className="revision-shell">
+      <section className="panel jobs-hero">
+        <div className="panel-head">
+          <h2>Gym Plan</h2>
+          <p>30 to 45 minute sessions built around your current knee restriction.</p>
+        </div>
+
+        <div className="revision-summary-grid">
+          <article className="revision-summary-card">
+            <span className="mini-label">Today&apos;s workout</span>
+            <strong>{todayPlan.label}</strong>
+            <p>{todayPlan.title}</p>
+          </article>
+          <article className="revision-summary-card">
+            <span className="mini-label">Current rule</span>
+            <strong>Upper body only</strong>
+            <p>Avoid leg training until your doctor or PT clears it.</p>
+          </article>
+        </div>
+      </section>
+
+      <section className="panel today-panel">
+        <div className="panel-head">
+          <h2>Today&apos;s Session</h2>
+          <p>{todayPlan.duration}</p>
+        </div>
+
+        <div className="today-title">
+          <div>
+            <strong>{todayPlan.title}</strong>
+            <p>{todayPlan.note}</p>
+          </div>
+        </div>
+
+        <div className="task-list">
+          {todayPlan.exercises.map((exercise) => (
+            <article key={`${todayPlan.dayKey}-${exercise.name}`} className="task-item workout-item">
+              <div className="workout-copy">
+                <strong>{exercise.name}</strong>
+                <span>{exercise.sets}</span>
+              </div>
+              <a href={exercise.link} target="_blank" rel="noreferrer" className="job-link">
+                Tutorial
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel logs-panel">
+        <div className="panel-head">
+          <h2>Weekly Plan</h2>
+          <p>Weekends are optional, as requested.</p>
+        </div>
+
+        <div className="gym-grid">
+          {gymPlan.map((day) => (
+            <article
+              key={day.dayKey}
+              className={`log-card gym-day-card ${day.dayKey === todayKey ? "gym-day-card-active" : ""}`}
+            >
+              <div className="log-entry-head">
+                <div>
+                  <strong>{day.label}</strong>
+                  <span>{day.title}</span>
+                </div>
+                <span className="chip-progress">{day.duration}</span>
+              </div>
+              <p className="gym-note">{day.note}</p>
+              <div className="gym-exercise-list">
+                {day.exercises.map((exercise) => (
+                  <div key={`${day.dayKey}-${exercise.name}`} className="gym-exercise-row">
+                    <div>
+                      <strong>{exercise.name}</strong>
+                      <span>{exercise.sets}</span>
+                    </div>
+                    <a href={exercise.link} target="_blank" rel="noreferrer" className="job-link">
+                      Tutorial
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
@@ -1530,6 +1626,12 @@ export default function App() {
           >
             Jobs
           </button>
+          <button
+            className={`ghost-btn ${currentPage === "gym" ? "toggle-active" : ""}`}
+            onClick={() => setCurrentPage("gym")}
+          >
+            Gym
+          </button>
         </div>
       </header>
 
@@ -1579,8 +1681,10 @@ export default function App() {
           updateConceptNote={updateConceptNote}
           removeConceptNote={removeConceptNote}
         />
-      ) : (
+      ) : currentPage === "jobs" ? (
         <JobsPage />
+      ) : (
+        <GymPage />
       )}
     </div>
   );
