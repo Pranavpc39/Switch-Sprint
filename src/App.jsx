@@ -49,6 +49,46 @@ function getRelativeDayNumber(startDate) {
   return Math.min(30, Math.max(1, diff));
 }
 
+function addDays(dateString, daysToAdd) {
+  const date = new Date(dateString);
+  date.setDate(date.getDate() + daysToAdd);
+  return date.toISOString().slice(0, 10);
+}
+
+function enumerateDates(startDate, endDate) {
+  const dates = [];
+  let cursor = startDate;
+
+  while (cursor <= endDate) {
+    dates.push(cursor);
+    cursor = addDays(cursor, 1);
+  }
+
+  return dates;
+}
+
+function getScheduleDateForPlanDay(startDate, skipDatesSet, planDay) {
+  let cursor = startDate;
+  let completedDays = 0;
+
+  while (true) {
+    if (!skipDatesSet.has(cursor)) {
+      completedDays += 1;
+      if (completedDays === planDay) {
+        return cursor;
+      }
+    }
+
+    cursor = addDays(cursor, 1);
+  }
+}
+
+function getEffectiveTodayDay(startDate, skipDatesSet) {
+  const allDates = enumerateDates(startDate, getTodayISO());
+  const activeDates = allDates.filter((date) => !skipDatesSet.has(date));
+  return Math.min(30, Math.max(1, activeDates.length));
+}
+
 function getCurrentStreak(tasks) {
   let streak = 0;
   for (const dayPlan of plan) {
@@ -753,6 +793,8 @@ function TrackerPage({
   fileInputRef,
   selectedPlan,
   todayDay,
+  skipDates,
+  scheduleDatesByPlanDay,
   completedDays,
   completionPct,
   streak,
@@ -770,6 +812,7 @@ function TrackerPage({
   interviewForm,
   setInterviewForm,
   updateSelectedDay,
+  toggleSkipDate,
   handleExport,
   handleImport,
   handleReset,
@@ -784,6 +827,8 @@ function TrackerPage({
 }) {
   const selectedStats = getStatsForDay(state.stats, selectedPlan.day);
   const focusProgress = getCompletedCount(state.tasks, selectedPlan.day, selectedPlan);
+  const selectedPlanDate = scheduleDatesByPlanDay[selectedPlan.day];
+  const skipDateOptions = enumerateDates(state.startDate, getTodayISO());
 
   return (
     <main className="dashboard">
@@ -897,16 +942,44 @@ function TrackerPage({
               max={getTodayISO()}
               onChange={(event) => handleStartDateChange(event.target.value)}
             />
-            <p>Today maps to Day {todayDay} based on {formatLongDate(state.startDate)}.</p>
+            <p>
+              Today maps to Day {todayDay} based on {formatLongDate(state.startDate)} with{" "}
+              {skipDates.length} skipped date{skipDates.length === 1 ? "" : "s"}.
+            </p>
           </div>
         </section>
+      </section>
+
+      <section className="panel skip-panel">
+        <div className="panel-head">
+          <h2>Skipped Dates</h2>
+          <p>Mark missed calendar dates so the full schedule shifts forward.</p>
+        </div>
+
+        <div className="skip-chip-grid">
+          {skipDateOptions.map((date) => {
+            const isSkipped = skipDates.includes(date);
+
+            return (
+              <button
+                key={date}
+                type="button"
+                className={`skip-chip ${isSkipped ? "skip-chip-active" : ""}`}
+                onClick={() => toggleSkipDate(date)}
+              >
+                <span>{formatShortDate(date)}</span>
+                <small>{isSkipped ? "Skipped" : "Active"}</small>
+              </button>
+            );
+          })}
+        </div>
       </section>
 
       <section className="panel today-panel">
         <div className="panel-head">
           <h2>Today&apos;s Focus</h2>
           <p>
-            {selectedPlan.week} • Day {selectedPlan.day}
+            {selectedPlan.week} • Day {selectedPlan.day} • {formatDateWithYear(selectedPlanDate)}
           </p>
         </div>
 
@@ -1279,17 +1352,17 @@ function TrackerPage({
             const isToday = entry.day === todayDay;
 
             return (
-              <button
-                key={entry.day}
-                className={`day-chip ${isSelected ? "active" : ""} ${isComplete ? "complete" : ""} ${isToday ? "today" : ""}`}
-                onClick={() => updateSelectedDay(entry.day)}
-              >
-                <div className="chip-top">
-                  <span className="chip-day">Day {entry.day}</span>
-                  <span className="chip-week">{entry.week}</span>
-                </div>
-                <div className="chip-focus">{entry.title}</div>
-                <span className="chip-progress">
+                <button
+                  key={entry.day}
+                  className={`day-chip ${isSelected ? "active" : ""} ${isComplete ? "complete" : ""} ${isToday ? "today" : ""}`}
+                  onClick={() => updateSelectedDay(entry.day)}
+                >
+                  <div className="chip-top">
+                    <span className="chip-day">Day {entry.day}</span>
+                    <span className="chip-week">{formatShortDate(scheduleDatesByPlanDay[entry.day])}</span>
+                  </div>
+                  <div className="chip-focus">{entry.title}</div>
+                  <span className="chip-progress">
                   {doneCount}/{entry.tasks.length} done
                 </span>
               </button>
@@ -1333,8 +1406,19 @@ export default function App() {
     saveState(state);
   }, [state]);
 
+  const skipDatesSet = useMemo(() => new Set(state.skipDates || []), [state.skipDates]);
+  const scheduleDatesByPlanDay = useMemo(
+    () =>
+      Object.fromEntries(
+        plan.map((entry) => [entry.day, getScheduleDateForPlanDay(state.startDate, skipDatesSet, entry.day)])
+      ),
+    [state.startDate, skipDatesSet]
+  );
   const selectedPlan = plan.find((entry) => entry.day === state.selectedDay) || plan[0];
-  const todayDay = useMemo(() => getRelativeDayNumber(state.startDate), [state.startDate]);
+  const todayDay = useMemo(
+    () => getEffectiveTodayDay(state.startDate, skipDatesSet),
+    [state.startDate, skipDatesSet]
+  );
   const completedDays = useMemo(
     () => plan.filter((entry) => isDayComplete(state.tasks, entry.day, entry)).length,
     [state.tasks]
@@ -1385,6 +1469,20 @@ export default function App() {
 
   function updateSelectedDay(day) {
     setState((current) => ({ ...current, selectedDay: day }));
+  }
+
+  function toggleSkipDate(date) {
+    setState((current) => {
+      const currentSkipDates = current.skipDates || [];
+      const nextSkipDates = currentSkipDates.includes(date)
+        ? currentSkipDates.filter((item) => item !== date)
+        : [...currentSkipDates, date].sort();
+
+      return {
+        ...current,
+        skipDates: nextSkipDates
+      };
+    });
   }
 
   function updateTask(day, index, checked) {
@@ -1641,6 +1739,8 @@ export default function App() {
           fileInputRef={fileInputRef}
           selectedPlan={selectedPlan}
           todayDay={todayDay}
+          skipDates={state.skipDates || []}
+          scheduleDatesByPlanDay={scheduleDatesByPlanDay}
           completedDays={completedDays}
           completionPct={completionPct}
           streak={streak}
@@ -1658,6 +1758,7 @@ export default function App() {
           interviewForm={interviewForm}
           setInterviewForm={setInterviewForm}
           updateSelectedDay={updateSelectedDay}
+          toggleSkipDate={toggleSkipDate}
           handleExport={handleExport}
           handleImport={handleImport}
           handleReset={handleReset}

@@ -283,6 +283,7 @@ h1 {
 }
 
 .focus-panel,
+.skip-panel,
 .roadmap-panel,
 .charts-panel,
 .logs-panel {
@@ -467,6 +468,37 @@ h1 {
   background: var(--panel-strong);
   text-align: left;
   cursor: pointer;
+}
+
+.skip-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.skip-chip {
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: var(--panel-strong);
+  text-align: left;
+  cursor: pointer;
+}
+
+.skip-chip-active {
+  background: rgba(201, 111, 59, 0.14);
+  border-color: rgba(201, 111, 59, 0.42);
+}
+
+.skip-chip span {
+  display: block;
+  font-weight: 700;
+}
+
+.skip-chip small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
 }
 
 .revision-chip.active {
@@ -1101,6 +1133,7 @@ h1 {
   .revision-summary-grid,
   .revision-detail-grid,
   .revision-chip-grid,
+  .skip-chip-grid,
   .concept-note-grid {
     grid-template-columns: 1fr;
   }

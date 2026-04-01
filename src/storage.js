@@ -17,6 +17,9 @@ function sanitizeState(raw) {
         ? safeRaw.selectedDay
         : 1,
     startDate: isValidDateOnly(safeRaw.startDate) ? safeRaw.startDate : getTodayISO(),
+    skipDates: Array.isArray(safeRaw.skipDates)
+      ? safeRaw.skipDates.filter((value) => isValidDateOnly(value))
+      : [],
     tasks: safeRaw.tasks && typeof safeRaw.tasks === "object" ? safeRaw.tasks : {},
     notes: safeRaw.notes && typeof safeRaw.notes === "object" ? safeRaw.notes : {},
     stats: safeRaw.stats && typeof safeRaw.stats === "object" ? safeRaw.stats : {},
