@@ -30,6 +30,7 @@ React tracker for a 30-day company switch sprint.
 - Generated job reports: [src/jobReportsData.generated.js](/Users/pranav/Documents/Playground/src/jobReportsData.generated.js)
 - Storage helpers: [src/storage.js](/Users/pranav/Documents/Playground/src/storage.js)
 - Job sync script: [scripts/sync-job-reports.mjs](/Users/pranav/Documents/Playground/scripts/sync-job-reports.mjs)
+- Auto-publish script: [scripts/publish-job-reports.sh](/Users/pranav/Documents/Playground/scripts/publish-job-reports.sh)
 - Vite config: [vite.config.js](/Users/pranav/Documents/Playground/vite.config.js)
 - GitHub Pages workflow: [.github/workflows/deploy-pages.yml](/Users/pranav/Documents/Playground/.github/workflows/deploy-pages.yml)
 
@@ -37,7 +38,8 @@ React tracker for a 30-day company switch sprint.
 
 - Source folder currently points to `/Users/pranav/Documents/Job Application Automations/job-search-reports`
 - The app reads daily files named like `YYYY-MM-DD-jobs.csv`
-- Run `npm run sync:jobs` whenever the automation creates a new CSV
+- The Codex automation is now configured to run [scripts/publish-job-reports.sh](/Users/pranav/Documents/Playground/scripts/publish-job-reports.sh) after generating the daily reports
+- That script runs `npm run sync:jobs`, commits the updated generated data, and pushes it to GitHub so Vercel can redeploy
 - The `Jobs` page will then show each snapshot day and preserve older days too
 
 ## Deploy
