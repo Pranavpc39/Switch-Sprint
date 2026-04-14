@@ -1,6 +1,6 @@
 export const jobReportMeta = {
   "sourceDir": "/Users/pranav/Documents/Job Application Automations/job-search-reports",
-  "lastSyncedAt": "2026-04-14T04:49:00.363Z",
+  "lastSyncedAt": "2026-04-14T13:26:25.411Z",
   "snapshotCount": 21,
   "error": null
 };
